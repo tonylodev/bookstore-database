@@ -198,8 +198,12 @@ cd bookstore-database
 # Create the database schema
 mysql -u root -p < schema.sql
 
-# Update database credentials
-# Edit src/db_config.php with your MySQL credentials
+# Configure the database connection (macOS/Linux)
+export BOOKSTORE_DB_HOST=127.0.0.1
+export BOOKSTORE_DB_PORT=3306
+export BOOKSTORE_DB_USER=root
+export BOOKSTORE_DB_PASSWORD='your-local-password'
+export BOOKSTORE_DB_NAME=OnlineBookstore
 
 # Start the PHP development server
 cd src
@@ -207,6 +211,19 @@ php -S localhost:8000
 
 # Open http://localhost:8000 in your browser
 ```
+
+On PowerShell, set the same values before starting PHP:
+
+```powershell
+$env:BOOKSTORE_DB_HOST = "127.0.0.1"
+$env:BOOKSTORE_DB_PORT = "3306"
+$env:BOOKSTORE_DB_USER = "root"
+$env:BOOKSTORE_DB_PASSWORD = "your-local-password"
+$env:BOOKSTORE_DB_NAME = "OnlineBookstore"
+```
+
+Database credentials are read only from the environment and should never be
+committed to source control.
 
 ---
 
