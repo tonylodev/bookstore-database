@@ -8,43 +8,46 @@ $conn = get_db_connection();
 
 $sql = '';
 $error = '';
-$message = '';
 $result = null;
 $row_count = 0;
+
+function is_read_only_select($sql) {
+    if (!preg_match('/\Aselect\b/i', ltrim($sql))) {
+        return false;
+    }
+
+    $blocked_patterns = [
+        '/\binto\s+(?:out|dump)file\b/i',
+        '/\bload_file\s*\(/i',
+        '/\bfor\s+update\b/i',
+        '/\block\s+in\s+share\s+mode\b/i',
+    ];
+
+    foreach ($blocked_patterns as $pattern) {
+        if (preg_match($pattern, $sql)) {
+            return false;
+        }
+    }
+
+    return true;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $sql = trim($_POST['sql'] ?? '');
 
     if ($sql === '') {
-        $error = 'Please type a SQL statement.';
-    } elseif (preg_match('/\bdrop\b/i', $sql)) {
-        $error = 'DROP statements are not allowed.';
+        $error = 'Please type a SELECT statement.';
+    } elseif (!is_read_only_select($sql)) {
+        $error = 'Only read-only SELECT statements are allowed.';
     } else {
-
-        $is_select = preg_match('/^\s*select/i', $sql);
-
         $query_result = mysqli_query($conn, $sql);
 
         if ($query_result === false) {
             $error = 'SQL Error: ' . mysqli_error($conn);
         } else {
-            if ($is_select) {
-                $result = $query_result;
-                $row_count = mysqli_num_rows($result);
-            } else {
-                if (preg_match('/^\s*create/i', $sql)) {
-                    $message = 'Table Created/Updated';
-                } elseif (preg_match('/^\s*insert/i', $sql)) {
-                    $message = 'Row Inserted';
-                } elseif (preg_match('/^\s*delete/i', $sql)) {
-                    $message = 'Row(s) Deleted: ' . mysqli_affected_rows($conn);
-                } elseif (preg_match('/^\s*update/i', $sql)) {
-                    $message = 'Row(s) Updated: ' . mysqli_affected_rows($conn);
-                } else {
-                    $message = 'Statement executed successfully.';
-                }
-            }
+            $result = $query_result;
+            $row_count = mysqli_num_rows($result);
         }
     }
 }
@@ -62,13 +65,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         th, td { border: 1px solid #888888; padding: 6px; text-align: left; }
         th { background-color: #eeeeee; }
         .error { color: red; font-weight: bold; margin-top: 10px; }
-        .message { color: green; font-weight: bold; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <h1>Yat Tung Lo - SQL Interface</h1>
-<p>Enter SQL below (DROP is blocked):</p>
+<p>Enter a read-only SELECT query below. Data-changing, file-access, and locking statements are blocked.</p>
 
 <form method="post">
     <textarea name="sql"><?php echo htmlspecialchars($sql); ?></textarea>
@@ -78,10 +80,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php if ($error): ?>
     <p class="error"><?php echo htmlspecialchars($error); ?></p>
-<?php endif; ?>
-
-<?php if ($message && !$error): ?>
-    <p class="message"><?php echo htmlspecialchars($message); ?></p>
 <?php endif; ?>
 
 <?php if ($result && !$error): ?>

@@ -27,6 +27,12 @@ function get_db_connection() {
     }
 
     mysqli_set_charset($conn, 'utf8mb4');
+
+    if (!mysqli_query($conn, 'SET SESSION TRANSACTION READ ONLY')) {
+        mysqli_close($conn);
+        throw new RuntimeException('Could not enable the read-only database session.');
+    }
+
     return $conn;
 }
 ?>

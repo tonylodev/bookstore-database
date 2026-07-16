@@ -17,7 +17,7 @@
 
 A complete **relational database system** for an online bookstore, featuring:
 - Normalized database schema with 6 related tables
-- PHP/HTML web interface for querying and displaying data
+- Read-only PHP/HTML web interface for querying and displaying data
 - **19 complex SQL queries** covering JOINs, subqueries, aggregation, and analytics
 
 ---
@@ -198,11 +198,25 @@ cd bookstore-database
 # Create the database schema
 mysql -u root -p < schema.sql
 
+# In MySQL, create a least-privilege account for the web interface
+mysql -u root -p
+```
+
+```sql
+CREATE USER IF NOT EXISTS 'bookstore_reader'@'127.0.0.1'
+    IDENTIFIED BY 'choose-a-local-password';
+GRANT SELECT ON OnlineBookstore.* TO 'bookstore_reader'@'127.0.0.1';
+```
+
+Then configure and run the web interface:
+
+```bash
+
 # Configure the database connection (macOS/Linux)
 export BOOKSTORE_DB_HOST=127.0.0.1
 export BOOKSTORE_DB_PORT=3306
-export BOOKSTORE_DB_USER=root
-export BOOKSTORE_DB_PASSWORD='your-local-password'
+export BOOKSTORE_DB_USER=bookstore_reader
+export BOOKSTORE_DB_PASSWORD='choose-a-local-password'
 export BOOKSTORE_DB_NAME=OnlineBookstore
 
 # Start the PHP development server
@@ -217,13 +231,16 @@ On PowerShell, set the same values before starting PHP:
 ```powershell
 $env:BOOKSTORE_DB_HOST = "127.0.0.1"
 $env:BOOKSTORE_DB_PORT = "3306"
-$env:BOOKSTORE_DB_USER = "root"
-$env:BOOKSTORE_DB_PASSWORD = "your-local-password"
+$env:BOOKSTORE_DB_USER = "bookstore_reader"
+$env:BOOKSTORE_DB_PASSWORD = "choose-a-local-password"
 $env:BOOKSTORE_DB_NAME = "OnlineBookstore"
 ```
 
 Database credentials are read only from the environment and should never be
-committed to source control.
+committed to source control. The interface accepts only `SELECT` statements,
+rejects file-output and locking clauses, and also configures the MySQL session
+as read-only. Keep the database account limited to `SELECT` as a separate
+least-privilege boundary.
 
 ---
 
