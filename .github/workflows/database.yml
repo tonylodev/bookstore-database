@@ -1,0 +1,49 @@
+name: Database validation
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  mysql-smoke-test:
+    name: MySQL 8.4 schema and queries
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: ci-only-password
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Load schema and execute query suite
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+          MYSQL_PWD: ci-only-password
+        run: |
+          docker exec -i -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root < schema.sql
+          docker exec -i -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root OnlineBookstore < queries.sql
+
+      - name: Verify schema contract
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+          MYSQL_PWD: ci-only-password
+        run: |
+          column_name=$(docker exec -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root --batch --skip-column-names OnlineBookstore \
+            --execute="SHOW COLUMNS FROM Shipper LIKE 'ShipperName'")
+          test -n "$column_name"

@@ -76,10 +76,10 @@ FROM Orders
 WHERE OrderDate BETWEEN '2016-08-01' AND '2016-08-04';
 
 #17
-SELECT Shipper.ShpperName, COUNT(Orders.OrderID) AS TotalShipped
+SELECT Shipper.ShipperName, COUNT(Orders.OrderID) AS TotalShipped
 FROM Shipper
 LEFT JOIN Orders ON Shipper.ShipperID = Orders.ShipperID
-GROUP BY Shipper.ShpperName;
+GROUP BY Shipper.ShipperName;
 
 #18
 SELECT Book.Title

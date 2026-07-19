@@ -7,6 +7,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
 [![HTML5](https://img.shields.io/badge/HTML5-Interface-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![Database validation](https://github.com/tonytheg/bookstore-database/actions/workflows/database.yml/badge.svg)](https://github.com/tonytheg/bookstore-database/actions/workflows/database.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 </div>
@@ -16,7 +17,7 @@
 ## 📋 Overview
 
 A complete **relational database system** for an online bookstore, featuring:
-- Normalized database schema with 6 related tables
+- Normalized database schema with 7 related tables
 - Read-only PHP/HTML web interface for querying and displaying data
 - **19 complex SQL queries** covering JOINs, subqueries, aggregation, and analytics
 
@@ -160,9 +161,9 @@ SELECT OrderID FROM Orders
 WHERE OrderDate BETWEEN '2016-08-01' AND '2016-08-04';
 
 -- #17: Shipment count per shipper
-SELECT Shipper.ShpperName, COUNT(Orders.OrderID) AS TotalShipped
+SELECT Shipper.ShipperName, COUNT(Orders.OrderID) AS TotalShipped
 FROM Shipper LEFT JOIN Orders ON Shipper.ShipperID = Orders.ShipperID
-GROUP BY Shipper.ShpperName;
+GROUP BY Shipper.ShipperName;
 
 -- #18: Low-stock books
 SELECT Book.Title FROM Book WHERE Quantity < 10;
@@ -242,6 +243,12 @@ rejects file-output and locking clauses, and also configures the MySQL session
 as read-only. Keep the database account limited to `SELECT` as a separate
 least-privilege boundary.
 
+### Database Validation
+
+GitHub Actions starts an isolated MySQL 8.4 service, loads `schema.sql`, executes
+all 19 statements in `queries.sql`, and verifies the public `ShipperName` schema
+contract on every push and pull request.
+
 ---
 
 ## 📁 Project Structure
@@ -253,6 +260,7 @@ bookstore-database/
 ├── src/
 │   ├── db_config.php # Database connection configuration
 │   └── index.php     # Web interface (PHP/HTML)
+├── .github/workflows/database.yml # MySQL schema/query smoke test
 ├── README.md
 └── LICENSE
 ```

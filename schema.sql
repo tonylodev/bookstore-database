@@ -56,7 +56,7 @@ CREATE TABLE Customer (
 -- ============================================
 CREATE TABLE Shipper (
     ShipperID   INT PRIMARY KEY AUTO_INCREMENT,
-    ShpperName  VARCHAR(150) NOT NULL
+    ShipperName VARCHAR(150) NOT NULL
 );
 
 -- ============================================
