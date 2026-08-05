@@ -28,13 +28,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v6
 
-      - name: Load schema and execute query suite
+      - name: Load schema, seed demo data, and execute query suite
         env:
           MYSQL_CONTAINER: ${{ job.services.mysql.id }}
           MYSQL_PWD: ci-only-password
         run: |
           docker exec -i -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
             mysql --user=root < schema.sql
+          docker exec -i -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root < seed.sql
           docker exec -i -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
             mysql --user=root OnlineBookstore < queries.sql
 
@@ -47,3 +49,26 @@ jobs:
             mysql --user=root --batch --skip-column-names OnlineBookstore \
             --execute="SHOW COLUMNS FROM Shipper LIKE 'ShipperName'")
           test -n "$column_name"
+
+      - name: Verify representative query results
+        env:
+          MYSQL_CONTAINER: ${{ job.services.mysql.id }}
+          MYSQL_PWD: ci-only-password
+        run: |
+          book_count=$(docker exec -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root --batch --skip-column-names OnlineBookstore \
+            --execute="SELECT COUNT(*) FROM Book")
+          order_total=$(docker exec -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root --batch --skip-column-names OnlineBookstore \
+            --execute="SELECT SUM(Book.UnitPrice * OrderDetail.Quantity) FROM OrderDetail JOIN Book ON OrderDetail.BookID = Book.BookID WHERE OrderDetail.OrderID = 1")
+          customer_total=$(docker exec -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root --batch --skip-column-names OnlineBookstore \
+            --execute="SELECT SUM(Book.UnitPrice * OrderDetail.Quantity) FROM Orders JOIN OrderDetail ON Orders.OrderID = OrderDetail.OrderID JOIN Book ON OrderDetail.BookID = Book.BookID WHERE Orders.CustomerID = 1")
+          unshipped_customer=$(docker exec -e MYSQL_PWD="$MYSQL_PWD" "$MYSQL_CONTAINER" \
+            mysql --user=root --batch --skip-column-names OnlineBookstore \
+            --execute="SELECT CONCAT(Customer.FirstName, ' ', Customer.LastName) FROM Customer JOIN Orders ON Customer.CustomerID = Orders.CustomerID WHERE Orders.ShippedDate IS NULL")
+
+          test "$book_count" = "5"
+          test "$order_total" = "110.00"
+          test "$customer_total" = "208.97"
+          test "$unshipped_customer" = "Riley Park"

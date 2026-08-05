@@ -2,7 +2,7 @@
 
 # 📚 Bookstore Database System
 
-**Full-stack relational database for an online bookstore with PHP web interface and complex SQL queries**
+**Full-stack relational database for an online bookstore with a PHP web interface and practical SQL query suite**
 
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
@@ -18,8 +18,9 @@
 
 A complete **relational database system** for an online bookstore, featuring:
 - Normalized database schema with 7 related tables
+- Fictional seed data for a useful first-run demo
 - Read-only PHP/HTML web interface for querying and displaying data
-- **19 complex SQL queries** covering JOINs, subqueries, aggregation, and analytics
+- **19 SQL examples** ranging from basic filtering to multi-table joins, subqueries, aggregation, and analytics
 
 ---
 
@@ -78,7 +79,8 @@ erDiagram
 
 ## ✨ SQL Query Highlights
 
-The project includes **19 SQL queries** of increasing complexity:
+The project includes **19 SQL queries** progressing from fundamentals to
+multi-table reporting:
 
 | # | Query | Concepts Used |
 |---|-------|--------------|
@@ -199,6 +201,9 @@ cd bookstore-database
 # Create the database schema
 mysql -u root -p < schema.sql
 
+# Load the fictional demo dataset
+mysql -u root -p < seed.sql
+
 # In MySQL, create a least-privilege account for the web interface
 mysql -u root -p
 ```
@@ -245,9 +250,10 @@ least-privilege boundary.
 
 ### Database Validation
 
-GitHub Actions starts an isolated MySQL 8.4 service, loads `schema.sql`, executes
-all 19 statements in `queries.sql`, and verifies the public `ShipperName` schema
-contract on every push and pull request.
+GitHub Actions starts an isolated MySQL 8.4 service, loads `schema.sql` and the
+fictional `seed.sql` dataset, and executes all 19 statements in `queries.sql`.
+It also verifies the public `ShipperName` schema contract and representative
+join, aggregate, and unshipped-order results on every push and pull request.
 
 ---
 
@@ -256,6 +262,7 @@ contract on every push and pull request.
 ```
 bookstore-database/
 ├── schema.sql        # Database DDL (CREATE TABLE statements)
+├── seed.sql          # Fictional, deterministic demo records
 ├── queries.sql       # All 19 SQL queries
 ├── src/
 │   ├── db_config.php # Database connection configuration
