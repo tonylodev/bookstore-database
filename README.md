@@ -7,7 +7,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?style=flat-square&logo=php&logoColor=white)](https://www.php.net)
 [![HTML5](https://img.shields.io/badge/HTML5-Interface-E34F26?style=flat-square&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
-[![Database validation](https://github.com/tonytheg/bookstore-database/actions/workflows/database.yml/badge.svg)](https://github.com/tonytheg/bookstore-database/actions/workflows/database.yml)
+[![Database validation](https://github.com/tonylodev/bookstore-database/actions/workflows/database.yml/badge.svg)](https://github.com/tonylodev/bookstore-database/actions/workflows/database.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
 </div>
@@ -195,7 +195,7 @@ GROUP BY Customer.CustomerID;
 
 ```bash
 # Clone the repository
-git clone https://github.com/tonytheg/bookstore-database.git
+git clone https://github.com/tonylodev/bookstore-database.git
 cd bookstore-database
 
 # Create the database schema
