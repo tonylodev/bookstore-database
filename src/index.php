@@ -2,14 +2,20 @@
 // index.php
 // Simple SQL Interface for Bookstore Project
 
-require_once 'db_config.php';
+require_once __DIR__ . '/db_config.php';
 
-$conn = get_db_connection();
-
+$conn = null;
 $sql = '';
 $error = '';
 $result = null;
 $row_count = 0;
+
+try {
+    $conn = get_db_connection();
+} catch (RuntimeException $exception) {
+    http_response_code(503);
+    $error = 'Database unavailable. Check the server and BOOKSTORE_DB_* configuration.';
+}
 
 function is_read_only_select($sql) {
     if (!preg_match('/\Aselect\b/i', ltrim($sql))) {
@@ -34,20 +40,26 @@ function is_read_only_select($sql) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
-    $sql = trim($_POST['sql'] ?? '');
+    $submitted_sql = $_POST['sql'] ?? '';
+    $sql = is_string($submitted_sql) ? trim($submitted_sql) : '';
 
-    if ($sql === '') {
+    if ($conn === null) {
+        // Keep the connection error and do not attempt a query.
+    } elseif ($sql === '') {
         $error = 'Please type a SELECT statement.';
     } elseif (!is_read_only_select($sql)) {
         $error = 'Only read-only SELECT statements are allowed.';
     } else {
-        $query_result = mysqli_query($conn, $sql);
-
-        if ($query_result === false) {
-            $error = 'SQL Error: ' . mysqli_error($conn);
-        } else {
-            $result = $query_result;
-            $row_count = mysqli_num_rows($result);
+        try {
+            $query_result = mysqli_query($conn, $sql);
+            if ($query_result instanceof mysqli_result) {
+                $result = $query_result;
+                $row_count = mysqli_num_rows($result);
+            } else {
+                $error = 'The SELECT statement must return a result set.';
+            }
+        } catch (mysqli_sql_exception $exception) {
+            $error = 'Query failed. Check the SELECT syntax and table or column names.';
         }
     }
 }
@@ -73,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <p>Enter a read-only SELECT query below. Data-changing, file-access, and locking statements are blocked.</p>
 
 <form method="post">
-    <textarea name="sql"><?php echo htmlspecialchars($sql); ?></textarea>
+    <textarea name="sql"><?php echo htmlspecialchars($sql, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?></textarea>
     <br><br>
     <input type="submit" value="Run SQL" style="padding:8px 16px;">
 </form>
@@ -87,14 +99,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <table>
         <tr>
             <?php foreach (mysqli_fetch_fields($result) as $field): ?>
-                <th><?php echo htmlspecialchars($field->name); ?></th>
+                <th><?php echo htmlspecialchars($field->name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?></th>
             <?php endforeach; ?>
         </tr>
 
         <?php while ($row = mysqli_fetch_assoc($result)): ?>
             <tr>
                 <?php foreach ($row as $value): ?>
-                    <td><?php echo htmlspecialchars($value); ?></td>
+                    <td><?php echo $value === null ? '<em>NULL</em>' : htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); ?></td>
                 <?php endforeach; ?>
             </tr>
         <?php endwhile; ?>
@@ -104,4 +116,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </body>
 </html>
 
-<?php mysqli_close($conn); ?>
+<?php if ($conn !== null) { mysqli_close($conn); } ?>

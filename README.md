@@ -248,6 +248,32 @@ rejects file-output and locking clauses, and also configures the MySQL session
 as read-only. Keep the database account limited to `SELECT` as a separate
 least-privilege boundary.
 
+### Interface errors and result values
+
+MySQLi exception reporting is enabled explicitly so PHP 7.4 and PHP 8.x use
+the same error path. Invalid SELECT queries keep the form available and show
+a query error. Failed connections or read-only session setup return HTTP 503
+with configuration guidance. Raw database exception messages and stack traces
+are not rendered in the page. See the [MySQLi reporting documentation](https://www.php.net/manual/en/mysqli-driver.report-mode.php).
+
+Result cells display SQL `NULL` explicitly, preserving the distinction from
+empty strings and zero. Query text, column names, and non-null values are
+HTML-escaped using UTF-8.
+
+Run the interface regression tests from the repository root:
+
+```bash
+php -n tests/interface_test.php
+```
+
+These eleven isolated scenarios execute the real PHP page with simulated MySQLi
+functions. They cover connection/session failures, invalid queries, rejected
+input, non-result SELECT statements, cleanup, HTML escaping, and nullable results; warnings and deprecations
+fail the tests. `-n` prevents loading MySQLi so the test doubles can be defined.
+No database or test framework is needed. These are controller tests, separate
+from the live MySQL schema/query checks below, and do not verify a real PHP-to-MySQL
+connection. Run them locally; the existing hosted workflow runs the SQL checks.
+
 ### Database Validation
 
 GitHub Actions starts an isolated MySQL 8.4 service, loads `schema.sql` and the
@@ -267,6 +293,7 @@ bookstore-database/
 ├── src/
 │   ├── db_config.php # Database connection configuration
 │   └── index.php     # Web interface (PHP/HTML)
+├── tests/            # Isolated PHP interface regression tests
 ├── .github/workflows/database.yml # MySQL schema/query smoke test
 ├── README.md
 └── LICENSE
